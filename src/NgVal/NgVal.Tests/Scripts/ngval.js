@@ -14,11 +14,11 @@ ngval.directive('ngval', ['$parse', function ($parse) {
                 }
                 return errors;
             };
-            scope.$watch(function() {
+            scope.$watch(function () {
                 return ngModel.$modelValue;
             }, function () {
                 ngModel.ngval = {
-                    hasError: ngModel.$dirty && ngModel.$invalid,
+                    hasError: ngModel.$pristine || ngModel.$dirty && ngModel.$invalid,
                     errors: getErrors()
                 };
             });

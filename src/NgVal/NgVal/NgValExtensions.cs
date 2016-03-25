@@ -25,6 +25,7 @@ namespace NgVal
         {
             return NgValFor(htmlHelper, expression, validationMessage, HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes));
         }
+
         public static MvcHtmlString NgValFor<TModel, TProperty>(this HtmlHelper<TModel> htmlHelper, Expression<Func<TModel, TProperty>> expression, string validationMessage, IDictionary<string, object> htmlAttributes)
         {
             ModelMetadata metadata = ModelMetadata.FromLambdaExpression(expression, new ViewDataDictionary<TModel>());
@@ -34,7 +35,34 @@ namespace NgVal
                     new ControllerContext())
                     .SelectMany(v => v.GetClientValidationRules()).ToArray();
 
-            var validatorMessages = validations.ToDictionary(k => k.ValidationType, v => v.ErrorMessage);
+
+            Dictionary<string, string> validatorMessages = new Dictionary<string, string>();
+            foreach (var modelClientValidationRule in validations)
+            {
+                switch (modelClientValidationRule.ValidationType)
+                {
+                    case "length":
+                        if (modelClientValidationRule.ValidationParameters.ContainsKey("min"))
+                        {
+                            validatorMessages.Add("minlength", modelClientValidationRule.ErrorMessage);
+                        }
+                        if (modelClientValidationRule.ValidationParameters.ContainsKey("max"))
+                        {
+                            validatorMessages.Add("maxlength", modelClientValidationRule.ErrorMessage);
+                        }
+                        break;
+                    case "range":
+                        validatorMessages.Add("minlength", modelClientValidationRule.ErrorMessage);
+                        validatorMessages.Add("maxlength", modelClientValidationRule.ErrorMessage);
+                        break;
+                    case "regex":
+                        validatorMessages.Add("pattern", modelClientValidationRule.ErrorMessage);
+                        break;
+                    default:
+                        validatorMessages.Add(modelClientValidationRule.ValidationType, modelClientValidationRule.ErrorMessage);
+                        break;
+                }
+            }
 
             string result = "";
 
@@ -44,7 +72,7 @@ namespace NgVal
             //string validatorMessagesStr = "{";
             //foreach (var validatorMessage in validatorMessages)
             //{
-            //    validatorMessagesStr += validatorMessage.Key + ":'" + validatorMessage.Value + "',";
+            //    validatorMessagesStr += validatorMessage.Key + ":'" + validatorMessage.Value + "',";
             //}
             //validatorMessagesStr += "}";
 
